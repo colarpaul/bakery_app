@@ -8,6 +8,7 @@ class RecipeIngredient extends Model
 {
     protected $table = 'recipes_ingredients';
 
+    // Save a new ingredient into database
     public static function save_new_recipe_ingredient($data) {
 
       $recipes_ingredients = new RecipeIngredient;
@@ -20,6 +21,7 @@ class RecipeIngredient extends Model
       $recipes_ingredients->save();
     }
 
+    // Attach ingredients to recipes
     public static function update_recipe_ingredient($data) {
 
       $ingredient = Ingredient::where('name', 'like', '%'.$data['ingredient']['name'].'%')->first();

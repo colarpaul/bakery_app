@@ -9,6 +9,7 @@ class Production extends Model
 {
     protected $table = 'production';
 
+    // Get info about all productions from the database
     public static function get_productions()
     {
         return DB::table('production')
@@ -28,6 +29,7 @@ class Production extends Model
                  ->paginate(5);
     }
 
+    // Get info about selected production from the database
     public static function get_production($id)
     {
         return DB::table('production')

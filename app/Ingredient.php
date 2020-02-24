@@ -8,6 +8,7 @@ class Ingredient extends Model
 {
     protected $table = 'ingredients';
 
+    // Save a new ingredient into database
     public static function save_new_ingredient($data) {
 
       $ingredient = new Ingredient;

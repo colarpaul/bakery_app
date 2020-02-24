@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 class Recipe extends Model
 {
 
+    // Get info about all recipes from the database
     public static function get_recipes()
     {
         return DB::table('recipes_ingredients')
@@ -26,6 +27,7 @@ class Recipe extends Model
                  ->paginate(5);
     }
 
+    // Get info about selected recipe from the database
     public static function get_recipe($id)
     {
         $recipe_data = DB::table('recipes_ingredients')
@@ -39,8 +41,8 @@ class Recipe extends Model
                           'recipes.image_url as recipe_image_url',
                           'ingredients.id as ingredient_id',
                           'ingredients.name as ingredient_name',
-                          'ingredients.quantity as ingredient_quantity',
-                          'ingredients.unit_of_measure as ingredient_unit_of_measure')
+                          'recipes_ingredients.ingredient_quantity as ingredient_quantity',
+                          'recipes_ingredients.ingredient_unit_of_measure as ingredient_unit_of_measure')
                  ->get();
 
 
@@ -68,6 +70,7 @@ class Recipe extends Model
         return $recipe;
     }
 
+    // Recalculate recipe quantity
     public static function add_quantity($production) {
 
       $recipe = Recipe::find($production->recipe_id);
@@ -77,6 +80,7 @@ class Recipe extends Model
       $recipe->save();
     }
 
+    // Recalculate recipe quantity
     public static function drop_quantity($production) {
 
       $recipe = Recipe::find($production->recipe_id);
