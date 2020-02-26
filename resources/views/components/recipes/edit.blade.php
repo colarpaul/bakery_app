@@ -11,23 +11,32 @@
         <div class="card">
           <div class="card-body">
             <div class="card-title d-flex">
-              <h3>{{ $recipe['name'] }}</h3>
-              <a href="{{ route('view_recipe', $recipe['id']) }}" class="btn btn-dark px-4 ml-auto"><i class="fa fa-chevron-left mr-2"></i>Back</a>
+              <h3>{{ $recipe->name }}</h3>
+              <a href="{{ route('view_recipe', $recipe->id) }}" class="btn btn-dark px-4 ml-auto"><i class="fa fa-chevron-left mr-2"></i>Back</a>
             </div>
 
+            @include('components.layouts.errors')
+
             <hr>
-            <form action="{{ route('update_recipe', $recipe['id']) }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('update_recipe', $recipe->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
 						<div class="form-group row">
 							<label class="col-md-2 col-form-label">Name</label>
 							<div class="col-md-10">
-                <input type="text" class="form-control" name="recipe_name" value="{{ $recipe['name'] }}" required>
+                <input type="text" class="form-control" name="recipe_name" value="{{ $recipe->name }}" required>
 							</div>
 						</div>
-						<div class="form-group row">
+            <div class="form-group row">
 							<label class="col-md-2 col-form-label">Quantity</label>
 							<div class="col-md-10">
-                <input type="text" class="form-control" name="recipe_quantity" value="{{ $recipe['quantity'] }}" required>
+    						<input type="number"
+                       class="form-control production_quantity"
+                       id="recipe_quantity"
+                       name="recipe_quantity"
+                       min="0"
+                       value="{{ $recipe->quantity }}"
+                       placeholder="Recipe quantity"
+                       required>
 							</div>
 						</div>
             <div class="form-group row">
@@ -38,7 +47,7 @@
     				  </div>
     				  <div class="custom-file">
     				    <input type="file" class="custom-file-input" id="image_url"
-    				      aria-describedby="inputGroupFileAddon01" name="image_url">
+    				      aria-describedby="inputGroupFileAddon01" name="image_url" value="{{ $recipe->image_url }}">
     				    <label class="custom-file-label" for="inputGroupFile01">Upload image</label>
     				  </div>
     				</div>
@@ -49,7 +58,7 @@
                 <div class="form-group">
                   <select class="form-control" name="recipe_unit_of_measure">
                     @foreach ($units_of_measure as $unit_of_measure)
-                    <option @if($recipe['unit_of_measure'] == $unit_of_measure) selected @endif>{{ $unit_of_measure }}</option>
+                    <option @if($recipe->unit_of_measure == $unit_of_measure) selected @endif>{{ $unit_of_measure }}</option>
                     @endforeach
                   </select>
                 </div>
@@ -60,20 +69,20 @@
       				<div class="col-md-10">
       					<div class="row">
       						<div class="col">
-                    @foreach($recipe['ingredients'] as $key => $ingredient)
+                    @foreach($recipe->ingredients as $key => $ingredient)
       							<div class="d-flex align-items-center mb-1 ingredient-row-to-clone">
       								<div class="row">
       									<div class="col-sm-6">
-      										<input type="text" class="form-control ingredient_name" value="{{ $ingredient['name'] }}" placeholder="Ingredient name" name="ingredients[{{ $key }}][name]" required>
+      										<input type="text" class="form-control ingredient_name" value="{{ $ingredient->name }}" placeholder="Ingredient name" name="ingredients[{{ $key }}][name]" required>
       									</div>
       									<div class="col-sm-3">
-      										<input type="number" class="form-control ingredient_quantity" min="0" value="{{ $ingredient['quantity'] }}" placeholder="Quantity" name="ingredients[{{ $key }}][quantity]" required>
+      										<input type="number" class="form-control ingredient_quantity" min="0" value="{{ $ingredient->pivot->ingredient_quantity }}" placeholder="Quantity" name="ingredients[{{ $key }}][quantity]" required>
       									</div>
       									<div class="col-sm-3">
       										<select class="form-control ingredient_unit_of_measure" required name="ingredients[{{ $key }}][unit_of_measure]">
                             <option value="" selected="" disabled="">Unit of measure</option>
                             @foreach($units_of_measure as $unit_of_measure)
-            								<option @if($ingredient['unit_of_measure'] == $unit_of_measure) selected @endif>{{ $unit_of_measure }}</option>
+            								<option @if($ingredient->unit_of_measure == $unit_of_measure) selected @endif>{{ $unit_of_measure }}</option>
                             @endforeach
       										</select>
       									</div>

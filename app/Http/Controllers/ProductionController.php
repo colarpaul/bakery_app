@@ -14,14 +14,6 @@ use App\Recipe;
 class ProductionController extends Controller
 {
 
-    protected $units_of_measure = [
-        'mililitru' => 'ml',
-        'litri' => 'l',
-        'grame' => 'g',
-        'kilograme' => 'kg',
-        'pieces' => 'pcs',
-    ];
-
     /**
      * View Productions
      *
@@ -35,7 +27,7 @@ class ProductionController extends Controller
         return view('components.productions.index', [
           'productions'      => $productions,
           'recipes'          => $recipes,
-          'units_of_measure' => $this->units_of_measure
+          'units_of_measure' => config('global.units_of_measure')
         ]);
     }
 
@@ -48,10 +40,16 @@ class ProductionController extends Controller
     {
         $production = Production::find($id);
 
-        // Recalculate recipe quantity
-        Recipe::add_quantity($production);
+        if( $production->delete() ) {
 
-        $production->delete();
+            // Recalculate recipe quantity
+            Recipe::recalculate_quantity($production);
+        } else {
+
+            throw ValidationException::withMessages([
+                'error_removing_production' => 'Can`t remove this production. Something went wrong!'
+            ]);
+        }
 
         return redirect()->route('view_productions');
     }
@@ -83,7 +81,7 @@ class ProductionController extends Controller
         return view('components.productions.edit', [
           'production'      => $production,
           'recipes'          => $recipes,
-          'units_of_measure' => $this->units_of_measure
+          'units_of_measure' => config('global.units_of_measure')
         ]);
     }
 
@@ -94,22 +92,13 @@ class ProductionController extends Controller
      */
     public function update($id, Request $request)
     {
-        $this->validate_quantity($request);
-
         $production = Production::find($id);
 
-        // Recalculate recipe quantity
-        Recipe::add_quantity($production);
+        $this->validation($request, $production);
 
-        $production->name            = $request->get('name');
-        $production->recipe_id       = $request->get('recipe_id');
-        $production->quantity        = $request->get('quantity');
-        $production->unit_of_measure = $request->get('unit_of_measure');
+        $quantity_before_it_changes  = $production->quantity;
 
-        $production->save();
-
-        // Recalculate recipe quantity
-        Recipe::drop_quantity($production);
+        $this->save_production($request, $production, $quantity_before_it_changes);
 
         return redirect()->route('view_production', $production->id);
     }
@@ -121,30 +110,70 @@ class ProductionController extends Controller
      */
     public function save(Request $request)
     {
-        $this->validate_quantity($request);
+        $this->validation($request);
 
         $production = new Production;
-
-        $production->name            = $request->get('name');
-        $production->recipe_id       = $request->get('recipe_id');
-        $production->quantity        = $request->get('quantity');
-        $production->unit_of_measure = $request->get('unit_of_measure');
-
-        $production->save();
-
-        // Recalculate recipe quantity
-        Recipe::drop_quantity($production);
+        $this->save_production($request, $production);
 
         return redirect()->route('view_production', $production->id);
     }
 
-    public function validate_quantity($request)
+    /**
+    * Saving the Production into database
+    * Recalculate quantity for the recipe
+    *
+    * Catch Exception
+    */
+    public function save_production($request, $production, $quantity_before_it_changes = 0) {
+
+      $production->name            = $request->get('name');
+      $production->recipe_id       = $request->get('recipe_id');
+      $production->quantity        = $request->get('quantity');
+      $production->unit_of_measure = $request->get('unit_of_measure');
+
+      if( $production->save() ) {
+
+          // Recalculate recipe quantity
+          $production->quantity = $quantity_before_it_changes - $production->quantity ;
+          Recipe::recalculate_quantity($production);
+      } else {
+
+          throw ValidationException::withMessages([
+            'error_creating_production' => 'Can`t create this production. Something went wrong!'
+          ]);
+      }
+    }
+
+    /**
+    * Validation used for the SAVE and UPDATE methods from ProductionController
+    */
+    public function validation($request, $production = null)
+    {
+      $request->validate([
+        'name'            => 'required',
+        'recipe_id'       => 'required',
+        'unit_of_measure' => 'required',
+        'quantity'        => [
+          'required',
+          $this->validate_quantity($request, $production),
+        ]
+      ]);
+    }
+    
+    public function validate_quantity($request, $production = null)
     {
       $recipe = Recipe::find($request->get('recipe_id'));
 
-      if($request->get('quantity') > $recipe->quantity_left) {
+      $total_quantity = $recipe->quantity;
+      if( $production ) {
+
+        $total_quantity += $production->quantity;
+      }
+
+      if($request->get('quantity') > $total_quantity) {
 
         throw ValidationException::withMessages(['error_quantity' => 'Don`t try to hack the value!']);
       }
+
     }
 }

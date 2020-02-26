@@ -18,12 +18,10 @@ class Production extends Model
                           'production.name as name',
                           'production.quantity as quantity',
                           'production.unit_of_measure as unit_of_measure',
-                          'recipes.quantity_left as quantity_left',
                           'recipes.name as recipe_name')
                  ->groupBy('production.id',
                            'production.name',
                            'production.quantity',
-                           'recipes.quantity_left',
                            'production.unit_of_measure',
                            'recipes.name')
                  ->paginate(5);
@@ -38,7 +36,6 @@ class Production extends Model
                  ->select('production.id as id',
                           'production.name as name',
                           'production.quantity as quantity',
-                          'recipes.quantity_left as quantity_left',
                           'production.unit_of_measure as unit_of_measure',
                           'recipes.name as recipe_name')
                  ->first();

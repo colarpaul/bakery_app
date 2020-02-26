@@ -5,7 +5,7 @@
       <span class="navbar-toggler-icon"></span>
     </button>
 
-    <div class="collapse navbar-collapse">
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav mr-auto">
         <li class="nav-item @if(Route::current()->getName() == 'view_productions') active @endif">
             <a class="nav-link" href="{{ route('view_productions') }}"> Production <span class="sr-only"></span></a>

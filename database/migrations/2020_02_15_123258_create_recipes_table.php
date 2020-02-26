@@ -18,7 +18,6 @@ class CreateRecipesTable extends Migration
             $table->string('name');
             $table->float('quantity')->nullable();
             $table->string('unit_of_measure');
-            $table->float('quantity_left')->nullable();
             $table->string('image_url')->nullable();
             $table->timestamps();
         });

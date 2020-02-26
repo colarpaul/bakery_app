@@ -3,7 +3,7 @@
 	<div class="modal-dialog modal-lg" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h5 class="modal-title">Add new recipe</h5>
+				<h5 class="modal-title">Add new production</h5>
 				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">×</span>
 				</button>
@@ -21,9 +21,9 @@
 					<label class="col-md-2 col-form-label">Recipe</label>
 					<div class="col-md-10">
 						<select class="form-control production_recipe_id" required name="recipe_id">
-							<option value="" selected="" disabled="">Recipe</option>
+							<option value="" selected="" disabled="">Production</option>
 							@foreach ($recipes as $recipe)
-							<option value="{{ $recipe->id }}" data-uom="{{ $recipe->unit_of_measure }}" data-quantity="{{ $recipe->quantity_left }}">{{ $recipe->name }}</option>
+							<option value="{{ $recipe->id }}" data-uom="{{ $recipe->unit_of_measure }}" data-quantity="{{ $recipe->quantity }}">{{ $recipe->name }}</option>
 							@endforeach
 						</select>
 					</div>

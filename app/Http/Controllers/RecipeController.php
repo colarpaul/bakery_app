@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Validator;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Storage;
 
 use App\Recipe;
@@ -13,14 +14,6 @@ use App\RecipeIngredient;
 
 class RecipeController extends Controller
 {
-
-    protected $units_of_measure = [
-        'mililitru' => 'ml',
-        'litri' => 'l',
-        'grame' => 'g',
-        'kilograme' => 'kg',
-        'pieces' => 'pcs',
-    ];
 
     /**
      * View Recipes
@@ -33,7 +26,7 @@ class RecipeController extends Controller
 
         return view('components.recipes.index', [
           'recipes'          => $recipes,
-          'units_of_measure' => $this->units_of_measure
+          'units_of_measure' => config('global.units_of_measure')
         ]);
     }
 
@@ -44,8 +37,20 @@ class RecipeController extends Controller
      */
     public function delete($id)
     {
-        $recipe = Recipe::find($id);
-        $recipe->delete();
+        $recipe              = Recipe::find($id);
+        $recipes_ingredients = RecipeIngredient::where('recipe_id', $id)->get();
+
+        if( $recipe->delete() ) {
+
+            foreach($recipes_ingredients as $recipe_ingredient) {
+                Ingredient::recalculate_quantity($recipe_ingredient);
+            }
+        } else {
+
+            throw ValidationException::withMessages([
+                'error_removing_recipe' => 'Can`t remove this recipe. Something went wrong!'
+            ]);
+        }
 
         return redirect()->route('view_recipes');
     }
@@ -75,7 +80,7 @@ class RecipeController extends Controller
 
         return view('components.recipes.edit', [
           'recipe'           => $recipe,
-          'units_of_measure' => $this->units_of_measure
+          'units_of_measure' => config('global.units_of_measure')
         ]);
     }
 
@@ -86,34 +91,26 @@ class RecipeController extends Controller
      */
     public function update($id, Request $request)
     {
+        $this->validation($request);
+
+        // Update the selected Recipe
         $recipe = Recipe::find($id);
+        $recipe = $this->save_recipe($recipe, $request);
 
-        $recipe->name            = $request->get('recipe_name');
-        $recipe->quantity        = $request->get('recipe_quantity');
-        $recipe->unit_of_measure = $request->get('recipe_unit_of_measure');
+        // Remove RecipeIngredient
+        $recipes_ingredients = RecipeIngredient::where('recipe_id', $recipe->id)->get();
+        foreach($recipes_ingredients as $recipe_ingredient) {
+            Ingredient::recalculate_quantity($recipe_ingredient);
 
-        $image = $request->file('image_url');
+            if( !$recipe_ingredient->delete() ) {
 
-        // Save/upload image in storage
-        if( $image ) {
-          $recipe->image_url = $image->store('public/recipes_images');
+              throw ValidationException::withMessages([
+                'error_removing_recipe_ingredient' => 'Can`t remove this recipe ingredient. Something went wrong!'
+              ]);
+            }
         }
 
-        $recipe->save();
-
-        $recipes_ingredients = RecipeIngredient::where('recipe_id', $recipe->id);
-        $recipes_ingredients->delete();
-
-        $ingredients = $request->get('ingredients');
-        foreach($ingredients as $ingredient) {
-
-            $data = [
-              'recipe'           => $recipe,
-              'ingredient'       => $ingredient
-            ];
-
-            RecipeIngredient::update_recipe_ingredient($data);
-        }
+        $this->update_recipe_ingredient($request, $recipe);
 
         return redirect()->route('view_recipe', $recipe->id);
     }
@@ -125,29 +122,69 @@ class RecipeController extends Controller
      */
     public function save(Request $request)
     {
-        $recipe              = new Recipe;
-        $recipes_ingredients = new RecipeIngredient;
+        $this->validation($request);
 
-        $recipe->name            = $request->get('recipe_name');
-        $recipe->quantity        = $request->get('recipe_quantity');
-        $recipe->unit_of_measure = $request->get('recipe_unit_of_measure');
-        $recipe->quantity_left   = $request->get('recipe_quantity');
-        $recipe->image_url       = $request->file('image_url')->store('public/recipes_images');
+        // Save a new Recipe
+        $recipe = new Recipe;
+        $recipe = $this->save_recipe($recipe, $request);
 
-        $recipe->save();
-
-        $ingredients = $request->get('ingredients');
-
-        foreach($ingredients as $ingredient) {
-
-          $data = [
-            'recipe'           => $recipe,
-            'ingredient'       => $ingredient
-          ];
-
-          RecipeIngredient::update_recipe_ingredient($data);
-        }
+        $this->update_recipe_ingredient($request, $recipe);
 
         return redirect()->route('view_recipes');
+    }
+
+    /**
+    * Saving the Recipe into database
+    *
+    * Returns $recipe Object
+    * Otherwise catch exception
+    */
+    public function save_recipe($recipe, $request)
+    {
+      $recipe->name            = $request->get('recipe_name');
+      $recipe->quantity        = $request->get('recipe_quantity');
+      $recipe->unit_of_measure = $request->get('recipe_unit_of_measure');
+
+      $image = $request->file('image_url');
+      if( $image ) {
+
+        $recipe->image_url = $image->store('public/recipes_images');
+      }
+
+      if( $recipe->save() ) {
+
+          return $recipe;
+      } else {
+
+          throw ValidationException::withMessages([
+            'error_creating_recipe' => 'Can`t create this recipe. Something went wrong!'
+          ]);
+      }
+
+    }
+
+    /**
+    * Create a new RecipeIngredient with a given $recipe Object
+    *
+    * Catch exception
+    */
+    public function update_recipe_ingredient($request, $recipe) {
+
+      $ingredients = $request->get('ingredients');
+      foreach($ingredients as $ingredient) {
+          RecipeIngredient::update_recipe_ingredient($recipe, $ingredient);
+      }
+    }
+
+    /**
+    * Validation used for the SAVE and UPDATE methods from RecipeController
+    */
+    public function validation($request)
+    {
+      $request->validate([
+        'recipe_name'                     => 'required',
+        'recipe_quantity'                 => 'required',
+        'recipe_unit_of_measure'          => 'required'
+      ]);
     }
 }

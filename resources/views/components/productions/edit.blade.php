@@ -15,6 +15,8 @@
               <a href="{{ route('view_production', $production->id) }}" class="btn btn-dark px-4 ml-auto"><i class="fa fa-chevron-left mr-2"></i>Back</a>
             </div>
 
+            @include('components.layouts.errors')
+
             <hr>
             <form action="{{ route('update_production', $production->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
@@ -27,10 +29,16 @@
             <div class="form-group row">
     					<label class="col-md-2 col-form-label">Recipe</label>
     					<div class="col-md-10">
+
     						<select class="form-control production_recipe_id" required name="recipe_id">
     							<option value="" selected="" disabled="">Recipe</option>
     							@foreach ($recipes as $recipe)
-    							<option value="{{ $recipe->id }}" data-uom="{{ $recipe->unit_of_measure }}" data-quantity="{{ $recipe->quantity_left + $production->quantity }}" @if($production->recipe_name == $recipe->name) selected @endif>{{ $recipe->name }}</option>
+    							<option value="{{ $recipe->id }}"
+                          data-uom="{{ $recipe->unit_of_measure }}"
+                          data-quantity="@if($production->recipe_name == $recipe->name){{ $recipe->quantity + $production->quantity }}@else{{ $recipe->quantity }}@endif"
+                          @if($production->recipe_name == $recipe->name) @php($selected = true) selected @endif>
+                          {{ $recipe->name }}
+                  </option>
     							@endforeach
     						</select>
     					</div>
@@ -38,7 +46,14 @@
 						<div class="form-group row">
 							<label class="col-md-2 col-form-label">Quantity</label>
 							<div class="col-md-10">
-    						<input type="number" class="form-control production_quantity" id="quantity" name="quantity" min="0" value="{{ $production->quantity }}" placeholder="Production quantity" required>
+    						<input type="number"
+                       class="form-control production_quantity"
+                       id="quantity"
+                       name="quantity"
+                       min="0"
+                       value="{{ $production->quantity }}"
+                       placeholder="Production quantity"
+                       required>
 							</div>
 						</div>
 						<div class="form-group row">

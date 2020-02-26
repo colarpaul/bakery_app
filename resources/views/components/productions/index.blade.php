@@ -11,7 +11,7 @@
         <div class="card">
           <div class="card-body">
             <div class="card-title d-flex">
-              <h3>Recipes</h3>
+              <h3>Production</h3>
               <a href="#" class="btn btn-success px-4 ml-auto" data-toggle="modal" data-target="#add_production_modal"><i class="fa fa-plus mr-2"></i>Add</a>
             </div>
 

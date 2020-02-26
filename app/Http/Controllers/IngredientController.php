@@ -12,14 +12,6 @@ use App\Ingredient;
 class IngredientController extends Controller
 {
 
-    protected $units_of_measure = [
-        'mililitru' => 'ml',
-        'litri' => 'l',
-        'grame' => 'g',
-        'kilograme' => 'kg',
-        'pieces' => 'pcs',
-    ];
-
     /**
      * View Ingredients
      *
@@ -31,7 +23,7 @@ class IngredientController extends Controller
 
         return view('components.ingredients.index', [
           'ingredients'      => $ingredients,
-          'units_of_measure' => $this->units_of_measure
+          'units_of_measure' => config('global.units_of_measure')
         ]);
     }
 
@@ -80,7 +72,7 @@ class IngredientController extends Controller
 
         return view('components.ingredients.edit', [
           'ingredient' => $ingredient,
-          'units_of_measure' => $this->units_of_measure
+          'units_of_measure' => config('global.units_of_measure')
         ]);
     }
 

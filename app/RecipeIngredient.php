@@ -3,42 +3,52 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\ValidationException;
 
 class RecipeIngredient extends Model
 {
     protected $table = 'recipes_ingredients';
 
     // Save a new ingredient into database
-    public static function save_new_recipe_ingredient($data) {
+    public static function save_new_recipe_ingredient($recipe, $ingredient) {
 
       $recipes_ingredients = new RecipeIngredient;
 
-      $recipes_ingredients->recipe_id                  = $data['recipe']->id;
-      $recipes_ingredients->ingredient_id              = $data['new_ingredient']->id;
-      $recipes_ingredients->ingredient_quantity        = $data['ingredient']['quantity'];
-      $recipes_ingredients->ingredient_unit_of_measure = $data['ingredient']['unit_of_measure'];
+      $recipes_ingredients->recipe_id                  = $recipe->id;
+      $recipes_ingredients->ingredient_id              = $ingredient->id;
+      $recipes_ingredients->ingredient_quantity        = $ingredient->quantity;
+      $recipes_ingredients->ingredient_unit_of_measure = $ingredient->unit_of_measure;
 
       $recipes_ingredients->save();
     }
 
     // Attach ingredients to recipes
-    public static function update_recipe_ingredient($data) {
+    public static function update_recipe_ingredient($recipe, $ingredient) {
 
-      $ingredient = Ingredient::where('name', 'like', '%'.$data['ingredient']['name'].'%')->first();
+      $quantity_before_it_changes = $ingredient['quantity'];
+      $ingredient_found = Ingredient::where('name', $ingredient['name'])->first();
 
-      if ($ingredient)
+      if ( $ingredient_found )
       {
+        $ingredient_found->quantity -= $quantity_before_it_changes;
+        if( $ingredient_found->quantity > 0 ) {
 
-        $data['new_ingredient'] = $ingredient;
+          $ingredient_found->save();
 
-        RecipeIngredient::save_new_recipe_ingredient($data);
+          $ingredient = $ingredient_found;
+          $ingredient->quantity = $quantity_before_it_changes;
+        } else {
+
+          throw ValidationException::withMessages([
+            'error_quantity' => 'RecipeIngredient quantity can`t be higher than Ingrediend quantity.'
+          ]);
+        }
+
       } else {
 
-        $new_ingredient = Ingredient::save_new_ingredient($data['ingredient']);
-
-        $data['new_ingredient'] = $new_ingredient;
-
-        RecipeIngredient::save_new_recipe_ingredient($data);
+        $ingredient = Ingredient::save_new_ingredient($ingredient);
+        $ingredient->quantity = $quantity_before_it_changes;
       }
+      RecipeIngredient::save_new_recipe_ingredient($recipe, $ingredient);
     }
 }

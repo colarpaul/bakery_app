@@ -12,8 +12,8 @@
 */
 
 Route::get('/', [
-    'as' => 'view_recipes',
-    'uses' => 'RecipeController@index'
+    'as' => 'view_productions',
+    'uses' => 'ProductionController@index'
 ]);
 
 // INGREDIENTS
