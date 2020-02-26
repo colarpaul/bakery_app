@@ -31,7 +31,7 @@ class RecipeIngredient extends Model
       if ( $ingredient_found )
       {
         $ingredient_found->quantity -= $quantity_before_it_changes;
-        if( $ingredient_found->quantity > 0 ) {
+        if( $ingredient_found->quantity >= 0 ) {
 
           $ingredient_found->save();
 
@@ -40,7 +40,7 @@ class RecipeIngredient extends Model
         } else {
 
           throw ValidationException::withMessages([
-            'error_quantity' => 'RecipeIngredient quantity can`t be higher than Ingrediend quantity.'
+            'error_quantity' => 'RecipeIngredient quantity can`t be higher than Ingredient quantity.'
           ]);
         }
 
