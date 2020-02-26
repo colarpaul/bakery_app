@@ -24,7 +24,7 @@
 					</div>
 				</div>
 				<div class="form-group row">
-					<label class="col-md-2 col-form-label">Ingredients</label>
+					<label class="col-md-2 col-form-label">UOM</label>
 					<div class="col-md-10">
 							<select class="form-control" name="unit_of_measure" required>
 								<option value="" selected="" disabled="">Unit of measure</option>
